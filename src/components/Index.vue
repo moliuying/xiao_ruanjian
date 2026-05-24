@@ -15,6 +15,8 @@
         <el-button type="success" @click="exportTxt" style="float: right; margin-top: 13px; margin-right: 20px;">提取目录信息</el-button>
         <el-button type="success" @click="exportExcel" style="float: right; margin-top: 13px; margin-right: 20px;">导出目录</el-button>
         <el-button type="success" @click="export_input" style="float: right; margin-top: 13px; margin-right: 20px;">导出标签</el-button>
+        <el-button type="warning" @click="openEnhancedDir" :disabled="!enhanced_output_dir" style="float: right; margin-top: 13px; margin-right: 20px;">打开处理后目录</el-button>
+        <el-button type="warning" @click="enhanceImages" :loading="enhancing" style="float: right; margin-top: 13px; margin-right: 20px;">图片像素扩展</el-button>
 
 <!--        <el-button type="warning" @click="exportTxt" style="float: right; margin-top: 13px; margin-right: 20px;">导出相册目录</el-button>-->
 <!--        <el-button type="primary" @click="trans_two" style="float: right; margin-top: 13px; margin-right: 20px;">导出2合1</el-button>-->
@@ -49,6 +51,17 @@
                             v-model="user"
                             placeholder="请填写拍摄者"
                     />
+                </el-col>
+            </el-row>
+            <el-row v-if="enhance_progress.visible">
+                <el-col :span="24" style="margin-top: 20px;">
+                    <el-progress :percentage="enhance_progress.percent" :status="enhance_progress.status">
+                        <template #default>
+                            <span style="color: #606266; font-size: 14px;">
+                                {{ enhance_progress.text }}
+                            </span>
+                        </template>
+                    </el-progress>
                 </el-col>
             </el-row>
         </div>
@@ -175,6 +188,9 @@
     import moment from "moment"
     let xlsx = require('node-xlsx')
     import html2canvas from 'html2canvas'
+    const Jimp = require('jimp')
+    const imageSize = require('image-size')
+    const {shell} = require('electron')
     // const huanjing_lujing = process.env.NODE_ENV !== 'production' ? __static: process.cwd()
 
     const os = require('os');
@@ -194,7 +210,15 @@
                 subArrFour: [],
                 twoArrs: [],
                 fourArrs: [],
-                fileArr:[]
+                fileArr:[],
+                enhancing: false,
+                enhanced_output_dir: '',
+                enhance_progress: {
+                    visible: false,
+                    percent: 0,
+                    status: '',
+                    text: ''
+                }
             }
         },
         mounted() {
@@ -667,6 +691,126 @@
                 // // 输出文件
                 fs.writeFileSync( path.join(huanjing_lujing, `软件资料`, '输入路径导出'+year+mounth+day+'_'+HH+mm+ss+'.docx'),  buf)
                 ElMessage({type: 'success', message: '相册信息导出成功',offset: 200})
+            },
+            collectImages(src, list){
+                if(!fs.existsSync(src)) return
+                const paths = fs.readdirSync(src)
+                const exts = ['jpg', 'jpeg', 'png', 'bmp', 'tif', 'tiff', 'webp']
+                paths.forEach(name => {
+                    const full = path.join(src, name)
+                    const stat = fs.statSync(full)
+                    if(stat.isFile()){
+                        const ext = path.extname(name).replace('.','').toLowerCase()
+                        if(exts.includes(ext)){
+                            list.push(full)
+                        }
+                    } else if(stat.isDirectory()){
+                        this.collectImages(full, list)
+                    }
+                })
+            },
+            openEnhancedDir(){
+                if(!this.enhanced_output_dir) {
+                    ElMessage({type: 'warning', message: '尚未生成处理后目录', offset: 200})
+                    return
+                }
+                if(!fs.existsSync(this.enhanced_output_dir)){
+                    ElMessage({type: 'warning', message: '目录不存在', offset: 200})
+                    return
+                }
+                shell.openPath(this.enhanced_output_dir).then(err => {
+                    if(err){
+                        ElMessage({type: 'error', message: '打开目录失败: ' + err, offset: 200})
+                    }
+                })
+            },
+            async enhanceImages(){
+                if(this.enhancing) return
+                const src = (this.export_in_path || '').trim()
+                if(!src){
+                    ElMessage({type: 'warning', message: '请先填写文件夹目录', offset: 200})
+                    return
+                }
+                if(!fs.existsSync(src)){
+                    ElMessage({type: 'error', message: '目录不存在', offset: 200})
+                    return
+                }
+                const TARGET_PX = 20000000
+                const parent = path.dirname(src)
+                const base = path.basename(src)
+                const outputRoot = path.join(parent, base + '_像素扩展')
+                if(!fs.existsSync(outputRoot)){
+                    fs.mkdirSync(outputRoot, {recursive: true})
+                }
+                this.enhanced_output_dir = outputRoot
+                this.enhancing = true
+                this.enhance_progress = { visible: true, percent: 0, status: '', text: '正在扫描图片...' }
+                try {
+                    const images = []
+                    this.collectImages(src, images)
+                    if(images.length === 0){
+                        ElMessage({type: 'info', message: '未找到图片', offset: 200})
+                        this.enhance_progress = { visible: false, percent: 0, status: '', text: '' }
+                        this.enhancing = false
+                        return
+                    }
+                    this.enhance_progress.text = `共 ${images.length} 张图片，开始处理...`
+                    let done = 0
+                    let upsized = 0
+                    let copied = 0
+                    for(const imgPath of images){
+                        try {
+                            const relPath = path.relative(src, imgPath)
+                            const outPath = path.join(outputRoot, relPath)
+                            const outDir = path.dirname(outPath)
+                            if(!fs.existsSync(outDir)){
+                                fs.mkdirSync(outDir, {recursive: true})
+                            }
+                            const dims = imageSize(imgPath)
+                            if(!dims || !dims.width || !dims.height){
+                                fs.copyFileSync(imgPath, outPath)
+                                copied++
+                            } else {
+                                const w = dims.width
+                                const h = dims.height
+                                const curPx = w * h
+                                if(curPx >= TARGET_PX){
+                                    fs.copyFileSync(imgPath, outPath)
+                                    copied++
+                                } else {
+                                    const ratio = Math.sqrt(TARGET_PX / curPx)
+                                    const newW = Math.ceil(w * ratio)
+                                    const newH = Math.ceil(h * ratio)
+                                    const image = await Jimp.read(imgPath)
+                                    image.resize(newW, newH, Jimp.RESIZE_BICUBIC)
+                                    await image.writeAsync(outPath)
+                                    upsized++
+                                }
+                            }
+                        } catch (e) {
+                            console.error('处理图片失败', imgPath, e)
+                        }
+                        done++
+                        const percent = Math.floor((done / images.length) * 100)
+                        this.enhance_progress.percent = percent
+                        this.enhance_progress.status = percent >= 100 ? 'success' : ''
+                        this.enhance_progress.text = `处理进度 ${done}/${images.length}  扩展:${upsized}  复制:${copied}`
+                    }
+                    this.enhance_progress.text = `处理完成  共${images.length}张  扩展:${upsized}  复制:${copied}`
+                    this.enhance_progress.status = 'success'
+                    ElMessage({
+                        type: 'success',
+                        message: `处理完成 共${images.length}张 扩展:${upsized} 复制:${copied}`,
+                        offset: 200
+                    })
+                } catch (err) {
+                    console.error(err)
+                    this.enhance_progress.status = 'exception'
+                    this.enhance_progress.text = '处理出错: ' + (err && err.message ? err.message : err)
+                    ElMessage({type: 'error', message: '处理出错', offset: 200})
+                } finally {
+                    this.enhancing = false
+                }
             },
         }
     }
