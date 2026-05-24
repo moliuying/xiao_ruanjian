@@ -1,0 +1,79 @@
+{
+  "name": "app",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "vue-cli-service electron:serve --mode dev",
+    "win": "vue-cli-service electron:build  --win",
+    "mac": "vue-cli-service electron:build  --mac",
+    "serve": "vue-cli-service serve",
+    "build": "vue-cli-service build --mode production",
+    "lint": "vue-cli-service lint",
+    "electron:build": "vue-cli-service electron:build",
+    "electron:serve": "vue-cli-service electron:serve",
+    "postinstall2": "install-app-deps",
+    "postinstall": "electron-builder install-app-deps",
+    "postuninstall": "electron-builder install-app-deps"
+  },
+  "main": "background.js",
+  "dependencies": {
+    "@electron/remote": "^2.0.8",
+    "@element-plus/icons-vue": "^2.0.6",
+    "aws-sdk": "^2.1259.0",
+    "axios": "^0.27.2",
+    "cheerio": "1.0.0-rc.10",
+    "core-js": "^3.6.5",
+    "docxtemplater": "^3.34.2",
+    "echarts": "^5.4.0",
+    "electron": "17.1.0",
+    "element-plus": "^2.0.4",
+    "exif-parser": "^0.1.12",
+    "exifreader": "^4.13.0",
+    "html2canvas": "^1.4.1",
+    "koa": "^2.14.1",
+    "koa-json": "^2.0.2",
+    "koa-router": "^12.0.0",
+    "mock-aws-s3": "^4.0.2",
+    "moment": "^2.29.4",
+    "nock": "^13.2.9",
+    "node-fetch": "^3.3.2",
+    "node-sass": "7.0.1",
+    "node-stream-zip": "^1.15.0",
+    "node-xlsx": "^0.21.0",
+    "pg-hstore": "^2.3.4",
+    "pizzip": "^3.1.4",
+    "sass": "^1.49.9",
+    "sass-loader": "10.1.1",
+    "sequelize": "^6.31.1",
+    "sqlite3": "^5.1.2",
+    "vue": "^3.0.0"
+  },
+  "devDependencies": {
+    "@vue/cli-plugin-babel": "~4.5.10",
+    "@vue/cli-plugin-eslint": "~4.5.10",
+    "@vue/cli-service": "~4.5.10",
+    "@vue/compiler-sfc": "^3.0.0",
+    "babel-eslint": "^10.1.0",
+    "electron-builder": "^23.6.0",
+    "electron-devtools-installer": "^3.1.0",
+    "eslint": "^6.7.2",
+    "eslint-plugin-vue": "^7.0.0",
+    "vue-cli-plugin-electron-builder": "~2.1.1"
+  },
+  "eslintConfig": {
+    "root": true,
+    "env": {
+      "node": true
+    },
+    "extends": [
+      "plugin:vue/vue3-essential"
+    ],
+    "parserOptions": {},
+    "rules": {}
+  },
+  "browserslist": [
+    "> 1%",
+    "last 2 versions",
+    "not dead"
+  ]
+}
