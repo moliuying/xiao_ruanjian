@@ -8,29 +8,13 @@
     justify-content: space-between;"
     >
         <div style="color: #fff; font-size: 24px; margin-left: 10px; line-height: 57px;">
-            数据转换软件
+            图片像素放大工具
         </div>
-        <el-button type="primary" @click="trans_two" style="float: right; margin-top: 13px; margin-right: 20px;">导出2合1</el-button>
-        <el-button type="primary" @click="trans_four" style="float: right; margin-top: 13px; margin-right: 20px;">导出4合1</el-button>
-        <el-button type="success" @click="exportTxt" style="float: right; margin-top: 13px; margin-right: 20px;">提取目录信息</el-button>
-        <el-button type="success" @click="exportExcel" style="float: right; margin-top: 13px; margin-right: 20px;">导出目录</el-button>
-        <el-button type="success" @click="export_input" style="float: right; margin-top: 13px; margin-right: 20px;">导出标签</el-button>
-
-<!--        <el-button type="warning" @click="exportTxt" style="float: right; margin-top: 13px; margin-right: 20px;">导出相册目录</el-button>-->
-<!--        <el-button type="primary" @click="trans_two" style="float: right; margin-top: 13px; margin-right: 20px;">导出2合1</el-button>-->
-<!--        <el-button type="success" @click="trans_four" style="float: right; margin-top: 13px; margin-right: 20px;">导出4合1</el-button>-->
-        <!--        <el-button type="success" @click="export_excel_out" style="float: right; margin-top: 13px;">导出</el-button>-->
-        <!--        <el-upload style="float: right; margin-top: 13px; margin-right: 10px;" ref="upload" action="" :before-upload="export_excel_in" :show-file-list="false" >-->
-        <!--            <el-button  type="primary" >导入</el-button>-->
-        <!--        </el-upload>-->
-        <!--            <el-menu-item index="start" style="float: right;">-->
-        <!--                <el-button type="warning" @click=" prevTextarea = ''; nowTextarea = ''">清空</el-button>-->
-        <!--            </el-menu-item>-->
-
+        <el-button type="warning" @click="startProcessImages" :loading="processing" style="float: right; margin-top: 13px; margin-right: 20px;">处理图片</el-button>
+        <el-button v-if="lastOutputDir" type="info" @click="openOutputDir" style="float: right; margin-top: 13px; margin-right: 20px;">打开输出目录</el-button>
     </el-menu>
     <div style="margin-top: 78px;">
-        <!--本人亲测，绝对管用的长度和高度像素大小为：width:794px;height:1090px;-->
-        <div style="padding: 10px; height: 100%; padding: 10px; margin-top: 60px;">
+        <div style="padding: 10px; margin-top: 60px;">
             <el-row>
                 <el-col :span="24">
                     <el-input
@@ -42,805 +26,262 @@
                     />
                 </el-col>
             </el-row>
-            <el-row>
+            <el-row v-if="processing">
                 <el-col :span="24" style="margin-top: 20px;">
-                    <el-input
-                            clearable
-                            v-model="user"
-                            placeholder="请填写拍摄者"
-                    />
+                    <el-progress :percentage="processPercent" :status="processStatus" />
+                    <div style="margin-top: 8px; color: #606266; font-size: 13px;">
+                        {{ processText }}
+                    </div>
                 </el-col>
             </el-row>
         </div>
-        <div id="two"   style="
-            width: calc(1570px);
-            height: calc(2025px);
-            padding: 85px 165px 175px 130px;
-            margin: 0 auto;
-            overflow: hidden;
-            box-sizing: border-box;">
-<!--            <template v-for="item in subArrTwo" >-->
-<!--                <img  v-if="item" :key="item" style="height: 50%; width: 100%;" :src="item" alt="">-->
-<!--            </template>-->
-<!--            <span v-for="item in subArrTwo" style="height: 50%; width: 100%; display: inline-block; border: 2px solid #000;"  :key="item">-->
-<!--                <img  v-if="item" :key="item" :src="item"  style="height: 100%; width: 100%;">-->
-<!--            </span>-->
-
-            <span v-for="item in subArrTwo" style="height: 50%; width: 100%;
-             display: inline-flex; /* 使用flex布局 */
-            justify-content: center; /* 水平居中 */
-            align-items: center; /* 垂直居中 */
-            overflow: hidden; /* 隐藏溢出的内容 */
-             border: 2px solid #000;"  :key="item">
-                <img  v-if="item" :key="item" :src="item"  style="
-    max-width: 100%; /* 图片最大宽度为100% */
-    max-height: 100%; /* 图片最大高度为100% */
-    object-fit: contain; /* 缩放图片以完全显示在容器内 */
-    object-position: center; /* 图片居中显示 */
-">
-            </span>
-        </div>
-
-        <div id="four" style="
-            width: calc(1430px);
-            height: calc(2120px);
-            padding: 72px 84px 140px 52px;
-            margin: 0 auto;
-            position: relative;
-            margin-top: 10px;
-            box-sizing: border-box;">
-<!--            <template v-for="item in subArrFour" >-->
-<!--                <img v-if="item" :key="item"  :src="item" alt="">-->
-<!--            </template>-->
-
-            <div  v-for="item in subArrFour" :key="item">
-                 <img v-if="item" :key="item"  :src="item"  style="
-    max-width: 100%; /* 图片最大宽度为100% */
-    max-height: 100%; /* 图片最大高度为100% */
-    object-fit: contain; /* 缩放图片以完全显示在容器内 */
-    object-position: center; /* 图片居中显示 */
-"/>
-            </div>
-        </div>
-
-
-        <!--        <div v-for="(subArr,index) in twoArrs" :key="subArr">-->
-        <!--            <div :id="'two'+index"   style="-->
-        <!--            width: calc(844px*2);-->
-        <!--            height: calc(1176px*2);-->
-        <!--            padding: 48px 88px 128px 56px;-->
-
-        <!--            margin: 0 auto;-->
-        <!--            overflow: hidden;-->
-        <!--            box-sizing: border-box;">-->
-        <!--                <template v-for="item in subArr" >-->
-        <!--                    <img  v-if="item" :key="item" style="height: 50%; width: 100%;" :src="item" alt="">-->
-        <!--                </template>-->
-        <!--            </div>-->
-        <!--        </div>-->
-
-        <!--        <div v-for="(subArr,index) in fourArrs" :key="subArr" id="four">-->
-        <!--            <div :id="'four'+index"  style="-->
-        <!--            width: calc(840px*2);-->
-        <!--            height: calc(2150px);-->
-        <!--            padding: 72px 84px 140px 52px;-->
-
-        <!--            margin: 0 auto;-->
-        <!--            position: relative;-->
-        <!--            margin-top: 10px;-->
-        <!--            box-sizing: border-box;">-->
-        <!--                &lt;!&ndash;                <p v-for="item in subArr" :key="item" :style="{backgroundImage: 'url(' + item + ')'}" >&ndash;&gt;-->
-        <!--                &lt;!&ndash;&lt;!&ndash;                    <img  :src="item" alt="">&ndash;&gt;&ndash;&gt;-->
-        <!--                &lt;!&ndash;                </p>&ndash;&gt;-->
-        <!--                <template v-for="item in subArr" >-->
-        <!--                    <img v-if="item" :key="item"  :src="item" alt="">-->
-        <!--                    &lt;!&ndash;                    <img v-if="item" :key="item"  src="@/assets/bg.jpeg" alt="">&ndash;&gt;-->
-        <!--                </template>-->
-
-        <!--            </div>-->
-        <!--        </div>-->
     </div>
-
-
-    <!--    <el-dialog v-model="lookResultModal" title="解析结果" :close-on-click-modal="false" :close-on-press-escape="false" :show-close="false">-->
-    <!--        <el-table-->
-    <!--                border-->
-    <!--                :data="resultData"-->
-    <!--                style="width: 100%">-->
-    <!--            <el-table-column label="一" width="80" header-align="center" align="left">-->
-    <!--                <template #default="scope"> <el-input v-model="scope.row[0]" style="text-align: center;"  /> </template>-->
-    <!--            </el-table-column>-->
-    <!--            <el-table-column label="二" width="80" header-align="center" align="left">-->
-    <!--                <template #default="scope"> <el-input v-model="scope.row[1]" /> </template>-->
-    <!--            </el-table-column>-->
-    <!--            <el-table-column label="三" width="80" header-align="center" align="left">-->
-    <!--                <template #default="scope"> <el-input v-model="scope.row[2]" /> </template>-->
-    <!--            </el-table-column>-->
-    <!--            <el-table-column label="四" width="80" header-align="center" align="left">-->
-    <!--                <template #default="scope"> <el-input v-model="scope.row[3]" /> </template>-->
-    <!--            </el-table-column>-->
-    <!--        </el-table>-->
-    <!--        <template #footer>-->
-    <!--              <span class="dialog-footer">-->
-    <!--    &lt;!&ndash;            <el-button @click="state.dialogTableVisible = false">取消</el-button>&ndash;&gt;-->
-    <!--                <el-button type="primary" @click=" lookResultModal = false ">查看完毕</el-button>-->
-    <!--              </span>-->
-    <!--        </template>-->
-    <!--    </el-dialog>-->
 </template>
 <script>
     import {ElMessage} from "element-plus"
     import fs from "fs"
     import path from "path"
-    import moment from "moment"
-    let xlsx = require('node-xlsx')
-    import html2canvas from 'html2canvas'
-    // const huanjing_lujing = process.env.NODE_ENV !== 'production' ? __static: process.cwd()
-
-    const os = require('os');
-    const homedir = os.homedir();
-    // console.log(homedir,'homedir')
-    // const huanjing_lujing =  homedir + `\\Desktop`
-    // const huanjing_lujing =  homedir
-    const huanjing_lujing =  process.cwd()
-    const exifParser = require('exif-parser')
     export default {
         name: "Index",
         data(){
             return {
-                export_in_path:'',
-                user:'',
-                subArrTwo: [],
-                subArrFour: [],
-                twoArrs: [],
-                fourArrs: [],
-                fileArr:[]
+                export_in_path: '',
+                processing: false,
+                processPercent: 0,
+                processText: '',
+                processStatus: '',
+                lastOutputDir: ''
             }
         },
         mounted() {
-            console.log("process.env.NODE_ENV",process.env.NODE_ENV )
-            console.log("huanjing_lujing",huanjing_lujing)
-
-            if(!fs.existsSync( path.join( huanjing_lujing, `软件资料`) )){
-                fs.mkdirSync( path.join(huanjing_lujing, `软件资料`) )
-            }
-            if(!fs.existsSync( path.join(huanjing_lujing, `软件资料`, `导出相册目录`) )){
-                fs.mkdirSync( path.join(huanjing_lujing, `软件资料`, `导出相册目录`) )
-            }
-            if(!fs.existsSync( path.join(huanjing_lujing, `软件资料`, `导出合成图片`) )){
-                fs.mkdirSync( path.join(huanjing_lujing, `软件资料`, `导出合成图片`) )
-            }
-            if(!fs.existsSync( path.join(huanjing_lujing, `软件资料`, `原始文件总目录`) )){
-                fs.mkdirSync( path.join(huanjing_lujing, `软件资料`, `原始文件总目录`) )
-            }
         },
         methods: {
-            liClick() {
-                this.step++
-            },
-            getAllImgFile(src){
-                let paths = fs.readdirSync(src)
-                paths.forEach( (path) =>{
-                    var _src = src + '/' +path
-                    let stat = fs.statSync(_src)
-                    if(stat.isFile()) {
-                        this.fileArr.push(_src)
-                    } else if(stat.isDirectory()) {
-                        this.getAllImgFile(_src)
+            collectImages(rootPath){
+                const list = []
+                const exts = ['.jpg', '.jpeg', '.png']
+                const walk = (dir) => {
+                    let entries
+                    try {
+                        entries = fs.readdirSync(dir)
+                    } catch (e) {
+                        return
                     }
-                })
-            },
-            // getAllFileNum2(src,num) {
-            //     let paths = fs.readdirSync(src)
-            //     if(num == 1){
-            //         // var imageUrl = '/软件资料/原始文件总目录/'
-            //         // if(paths.length == 4){
-            //         //     this.fourArrs.push(paths.map(item=>  imageUrl + src.split('/')[ src.split('/').length - 1 ] +'/' +item  ))
-            //         // }
-            //
-            //         // var imageUrl = '../软件资料/原始文件总目录/'
-            //         var imageUrl = '../软件资料/原始文件总目录/'
-            //         if(paths.length == 4){
-            //             this.fourArrs.push(paths.map(item=>  imageUrl + src.split('/')[ src.split('/').length - 1 ] +'/' +item  ))
-            //         }
-            //     }
-            //     paths.forEach( (path) =>{
-            //         var _src = src + '/' +path
-            //         let stat = fs.statSync(_src)
-            //         if(stat.isFile()) {
-            //             this.fileArr.push(_src)
-            //         } else if(stat.isDirectory()) {
-            //             this.getAllFileNum2(_src,1)
-            //         }
-            //     })
-            // },
-            // getAllFileNum1(src,num) {
-            //     let paths = fs.readdirSync(src)
-            //     if(num == 1){
-            //         var imageUrl = '../软件资料/原始文件总目录/'
-            //         if(paths.length == 2){
-            //             this.twoArrs.push(paths.map(item=>  imageUrl + src.split('/')[ src.split('/').length - 1 ] +'/' + item ))
-            //         }
-            //     }
-            //     paths.forEach( (path) =>{
-            //         var _src = src + '/' +path
-            //         let stat = fs.statSync(_src)
-            //         if(stat.isFile()) {
-            //             this.fileArr.push(_src)
-            //         } else if(stat.isDirectory()) {
-            //             this.getAllFileNum1(_src,1)
-            //         }
-            //     })
-            // },
-            exportImg(imgDom){
-                console.log(imgDom)
-                this.$nextTick(() => {
-                    // 获取要转换的元素
-                    // const imgDom = this.$refs.imgDom
-                    // 拿到目标dom调用一下html2canvas方法就能生成canvas对象了
-                    // 获取要转换的元素
-                    html2canvas(imgDom, {
-                        useCORS: true // 开启跨域设置，需要后台设置cors
-                    }).then((canvas) => {
-                        // toDataURL函数生成img标签的可用数据  图片格式转成 base64
-                        let base_64_url = canvas.toDataURL("image/png")
-                        // console.log(base_64_url)
-                        // if(!fs.existsSync( path.join(huanjing_lujing, `resources`) )){
-                        //     fs.mkdirSync( path.join(huanjing_lujing, `resources`) )
-                        // }
-                        // if(!fs.existsSync( path.join(huanjing_lujing, `resources/app`) )){
-                        //     fs.mkdirSync( path.join(huanjing_lujing, `resources/app`) )
-                        // }
-                        // if(!fs.existsSync( path.join(huanjing_lujing, `resources/app/软件资料`) )){
-                        //     fs.mkdirSync( path.join(huanjing_lujing, `resources/app/软件资料`) )
-                        // }
-                        // if(!fs.existsSync( path.join(huanjing_lujing, `resources/app/软件资料/导出合成图片`) )){
-                        //     fs.mkdirSync( path.join(huanjing_lujing, `resources/app/软件资料/导出合成图片`) )
-                        // }
-
-
-                        var base64 = base_64_url.replace(/^data:image\/\w+;base64,/, ""); //去掉图片base64码前面部分data:image/png;base64
-                        var dataBuffer = new Buffer(base64, 'base64'); //把base64码转成buffer对象，
-                        fs.writeFile( path.join(huanjing_lujing, `软件资料/导出合成图片`,  `${moment().format('YYYY-MM-DD-HH-mm-ss')}.png`) ,dataBuffer,function(err){//用fs写入文件
-                            if(err){
-                                console.log(err);
-                            }else{
-                                console.log('写入成功！');
-                                ElMessage({message:  '图片导出成功', grouping: true, type: 'success' })
+                    entries.forEach(name => {
+                        const full = path.join(dir, name)
+                        let st
+                        try { st = fs.statSync(full) } catch (e) { return }
+                        if (st.isDirectory()) {
+                            walk(full)
+                        } else if (st.isFile()) {
+                            const ext = path.extname(name).toLowerCase()
+                            if (exts.includes(ext)) {
+                                list.push(full)
                             }
-                        });
-                    })
-                })
-            },
-            trans_four(){
-                // this.fourArrs = []
-                // this.fileArr = []
-                // this.getAllFileNum2( path.join(huanjing_lujing, `软件资料`, '原始文件总目录') )
-                // console.log(this.fourArrs)
-                // this.$nextTick(() => {
-                //     for(let index in this.fourArrs){
-                //         let imgDom = window.document.getElementById('four'+index)
-                //         this.exportImg(imgDom)
-                //     }
-                // })
-
-
-                this.twoArrs = []
-                this.fourArrs = []
-                this.fileArr = []
-
-                this.getAllImgFile( path.join(huanjing_lujing, `软件资料`, '原始文件总目录') )
-                console.log(this.fileArr)
-                let arr = []
-                this.fileArr.forEach(item=>{
-                    // console.log(item)
-                    var file_name = item.replace(/(.*\/)*([^.]+).*/ig,function ($,$1,$2,) { return $2 })
-                    if(file_name.includes('-')){
-                        // var imageUrl = '/软件资料/原始文件总目录/'
-                        // arr.push( imageUrl + item.split('/')[ item.split('/').length - 1 ] )
-                        // arr.push( path.resolve('/软件资料/原始文件总目录/', item.split('/')[ item.split('/').length - 1 ]) )
-                        arr.push( 'atom:///'+item )
-                    }
-                })
-                console.log(arr)
-                this.fourArrs =
-                    // arr.sort(() => Math.random() > .5) // 打乱
-                    arr.map((e, i) => i % 4 ? null : [arr[i], arr[i + 1], arr[i + 2], arr[i + 3]]) // 两两取出
-                        .filter(Boolean)
-                console.log(this.fourArrs )
-                // this.$nextTick(() => {
-                //     for(let index in this.fourArrs){
-                //         let imgDom = window.document.getElementById('four'+index)
-                //         this.exportImg(imgDom)
-                //     }
-                // })
-                //一个一个渲染导出
-                this.getOneSubArrToImgFour(this.fourArrs,0)
-            },
-            trans_two(){
-                // this.twoArrs = []
-                // // this.fileArr = []
-                // this.getAllFileNum1( path.join(huanjing_lujing, `软件资料`, '原始文件总目录') )
-                // console.log(this.twoArrs)
-                // this.$nextTick(() => {
-                //     for(let index in this.twoArrs){
-                //         console.log('two'+index)
-                //         let imgDom = window.document.getElementById('two'+index)
-                //         this.exportImg(imgDom)
-                //     }
-                // })
-                this.twoArrs = []
-                this.fourArrs = []
-                this.fileArr = []
-                this.getAllImgFile( path.join(huanjing_lujing, `软件资料`, '原始文件总目录') )
-                console.log(this.fileArr)
-                let arr = []
-                this.fileArr.forEach(item=>{
-                    // console.log(item)
-                    var file_name = item.replace(/(.*\/)*([^.]+).*/ig,function ($,$1,$2,) { return $2 })
-                    if(file_name.includes('-')){
-                        // var imageUrl = '/软件资料/原始文件总目录/'
-                        // arr.push( imageUrl + item.split('/')[ item.split('/').length - 1 ] )
-                        // arr.push( path.resolve('/软件资料/原始文件总目录/', item.split('/')[ item.split('/').length - 1 ]) )
-                        arr.push( 'atom:///'+item )
-                    }
-                })
-                console.log(arr)
-
-                this.twoArrs =
-                    // arr.sort(() => Math.random() > .5) // 打乱
-                    arr.map((e, i) => i % 2 ? null : [arr[i], arr[i + 1]]) // 两两取出
-                        .filter(Boolean)
-                console.log(this.twoArrs )
-
-                //一个一个渲染导出
-                this.getOneSubArrToImg(this.twoArrs,0)
-            },
-            getOneSubArrToImgFour(arr,index){
-                if(index >= arr.length){
-                    ElMessage({message:  '图片全部导出成功', grouping: true, type: 'success' })
-                    return
-                }
-                this.subArrFour = arr[index]
-                // return;
-                console.log("this.subArrFour",this.subArrFour)
-                let imgDom = window.document.getElementById('four')
-                this.$nextTick(() => {
-                    // 获取要转换的元素
-                    // const imgDom = this.$refs.imgDom
-                    // 拿到目标dom调用一下html2canvas方法就能生成canvas对象了
-                    // 获取要转换的元素
-
-                    console.log(imgDom,"imgDom")
-                    html2canvas(imgDom, {
-                        useCORS: true // 开启跨域设置，需要后台设置cors
-                    }).then((canvas) => {
-                        let base_64_url = canvas.toDataURL("image/png")
-                        var base64 = base_64_url.replace(/^data:image\/\w+;base64,/, ""); //去掉图片base64码前面部分data:image/png;base64
-                        var dataBuffer = new Buffer(base64, 'base64'); //把base64码转成buffer对象，
-                        fs.writeFile( path.join(huanjing_lujing, `软件资料/导出合成图片`,  `${moment().format('YYYY-MM-DD-HH-mm-ss')}.png`) ,dataBuffer,(err)=>{//用fs写入文件
-                            if(err){
-                                console.log(err);
-                            }else{
-                                console.log('写入成功！');
-                                ElMessage({message:  '图片导出成功-'+(index+1)+'/'+arr.length, grouping: true, type: 'success' })
-                                this.subArrFour = []
-                                index++
-                                this.getOneSubArrToImgFour(arr,index)
-                            }
-                        });
-                    })
-                })
-            },
-            getOneSubArrToImg(arr,index){
-                if(index >= arr.length){
-                    ElMessage({message:  '图片全部导出成功', grouping: true, type: 'success' })
-                    return
-                }
-                this.subArrTwo = arr[index]
-                console.log("this.subArrTwo",this.subArrTwo)
-                let imgDom = window.document.getElementById('two')
-                this.$nextTick(() => {
-                    // 获取要转换的元素
-                    // const imgDom = this.$refs.imgDom
-                    // 拿到目标dom调用一下html2canvas方法就能生成canvas对象了
-                    // 获取要转换的元素
-                    html2canvas(imgDom, {
-                        useCORS: true // 开启跨域设置，需要后台设置cors
-                    }).then((canvas) => {
-                        // toDataURL函数生成img标签的可用数据  图片格式转成 base64
-                        let base_64_url = canvas.toDataURL("image/png")
-                        // console.log(base_64_url)
-                        // if(!fs.existsSync( path.join(huanjing_lujing, `resources`) )){
-                        //     fs.mkdirSync( path.join(huanjing_lujing, `resources`) )
-                        // }
-                        // if(!fs.existsSync( path.join(huanjing_lujing, `resources/app`) )){
-                        //     fs.mkdirSync( path.join(huanjing_lujing, `resources/app`) )
-                        // }
-                        // if(!fs.existsSync( path.join(huanjing_lujing, `resources/app/软件资料`) )){
-                        //     fs.mkdirSync( path.join(huanjing_lujing, `resources/app/软件资料`) )
-                        // }
-                        // if(!fs.existsSync( path.join(huanjing_lujing, `resources/app/软件资料/导出合成图片`) )){
-                        //     fs.mkdirSync( path.join(huanjing_lujing, `resources/app/软件资料/导出合成图片`) )
-                        // }
-
-
-                        var base64 = base_64_url.replace(/^data:image\/\w+;base64,/, ""); //去掉图片base64码前面部分data:image/png;base64
-                        var dataBuffer = new Buffer(base64, 'base64'); //把base64码转成buffer对象，
-                        fs.writeFile( path.join(huanjing_lujing, `软件资料/导出合成图片`,  `${moment().format('YYYY-MM-DD-HH-mm-ss')}.png`) ,dataBuffer,(err)=>{//用fs写入文件
-                            if(err){
-                                console.log(err);
-                            }else{
-                                console.log('写入成功！');
-                                ElMessage({message:  '图片导出成功-'+(index+1)+'/'+arr.length, grouping: true, type: 'success' })
-                                this.subArrTwo = []
-                                index++
-                                this.getOneSubArrToImg(arr,index)
-                            }
-                        });
-                    })
-                })
-            },
-            exportTxt(title,allData){
-                let year = moment().format('YYYY')
-                let mounth = moment().format('MM')
-                let day = moment().format('DD')
-                let HH = moment().format('HH')
-                let mm = moment().format('mm')
-                let ss =moment().format('ss')
-
-                this.fileArr = []
-                this.getAllImgFile( path.join(huanjing_lujing, `软件资料`, '原始文件总目录') )
-                // console.log(this.fileArr)
-                // let map = {}
-                // for(let i=1; i<=200; i++){
-                //     map['a'+i] = ''
-                // }
-                let arr = []
-                this.fileArr.forEach(item=>{
-                    // console.log(item)
-                    var file_name = item.replace(/(.*\/)*([^.]+).*/ig,function ($,$1,$2,) { return $2 })
-                    if(file_name.includes('-')){
-                        arr.push({ name: file_name, index: Number(file_name.split('-')[0]) })
-                        // map[ 'a'+Number(file_name.split('-')[0]) ] = file_name.split('-')[1]
-                    }
-                })
-                arr = arr.sort((a,b)=> a.index - b.index).map(item=> item.name)
-                console.log(arr)
-                // console.log(map)
-                // console.log(map)
-                // // 引入相关的库
-                // var PizZip = require('pizzip');
-                // var Docxtemplater = require('docxtemplater');
-                // // 读取文件,以二进制文件形式保存
-                // var content = fs.readFileSync( path.join(huanjing_lujing, `软件资料`, '相册目录模板.docx'), 'binary');
-                // // console.log(content)
-                // // // 压缩数据
-                // var zip = new PizZip(content);
-                // // 生成模板文档
-                // var doc = new Docxtemplater(zip);
-                // // console.log(doc)
-                // // // 设置填充数据
-                // doc.setData(map);
-                // // // //渲染数据生成文档
-                // doc.render()
-                // // // 将文档转换文nodejs能使用的buf
-                // var buf = doc.getZip().generate({ type: 'nodebuffer' });
-                // // // 输出文件
-                // fs.writeFileSync(   path.join(huanjing_lujing, `软件资料`, '导出相册目录', year+':'+mounth+':'+day+''+HH+':'+mm+':'+ss+':'+`导出的相册名.docx`), buf);
-                fs.writeFileSync( path.join(huanjing_lujing, `软件资料`, '导出相册目录', year+mounth+day+'_'+HH+mm+ss+'.txt'),  arr.join('\r\n') )
-                ElMessage({type: 'success', message: '相册目录TXT导出成功',offset: 200})
-            },
-            getTenNum(n,arr) {
-                var result = [];
-                var count = arr.length;
-                for (var i = 0; i < n; i++) {
-                    var index = ~~(Math.random() * count) + i;
-                    if(result.includes(arr[index])){
-                        continue;
-                    }
-                    result[i] = arr[index];
-                    arr[index] = arr[i];
-                    count--;
-                }
-                return result
-            },
-            async transFolder(src){
-                // 图片类型列表
-                const imageExtensions = ['jpg', 'jpeg', 'png']
-                function isImageFile(file) {
-                    const ext = path.extname(file).slice(1);
-                    return imageExtensions.includes(ext);
-                }
-                //读取目录
-                // let src =  path.join(this.export_in_path)
-                console.log(src)
-                let Paths = fs.readdirSync(src, "utf8")
-                console.log(Paths)
-                for(let item of Paths){
-                    let childFlod = path.join(src, item)
-                    const stats = fs.statSync(childFlod);
-                    if (stats.isFile()) {
-                        console.log('这是一个文件');
-                        console.log("item",item)
-                        if (isImageFile(item.toLowerCase())) {
-
-                            let data = fs.readFileSync(path.join(childFlod))
-                            const parser = exifParser.create(data);
-                            const result = parser.parse();
-                            // console.log(result.tags.CreateDate)
-                            // console.log(result.tags)
-                            // console.log(  moment(new Date(result.tags.CreateDate * 1000)).format('YYYY-MM-DD HH:mm:ss')  )
-                            this.arr.push({
-                                title: item.replace('.jpg','').replace('.JPG',''),
-                                user: this.user,
-                                num: item.split('-')[0],
-                                time: moment(new Date(result.tags.CreateDate * 1000)).subtract(8, 'hours').format('YYYY-MM-DD')
-                            })
                         }
-                    } else if (stats.isDirectory()) {
-                        console.log('这是一个文件夹 夹夹夹  继续往下查')
-                        this.transFolder(childFlod)
+                    })
+                }
+                walk(rootPath)
+                return list
+            },
+            ensureDir(dir){
+                if (!fs.existsSync(dir)) {
+                    fs.mkdirSync(dir, { recursive: true })
+                }
+            },
+            resizeImageToBuffer(img, targetPixels){
+                return new Promise((resolve, reject) => {
+                    const ow = img.naturalWidth
+                    const oh = img.naturalHeight
+                    if (!ow || !oh) {
+                        reject(new Error('无法获取图片尺寸'))
+                        return
                     }
-                }
-                return this.arr
-            },
-            async exportExcel(){
-                this.arr = []
-                let imgs = await this.transFolder(path.join(this.export_in_path))
-                console.log(imgs)
-                imgs = imgs.sort((a, b) => {
-                    return a.num - b.num;
+                    const current = ow * oh
+                    let nw = ow
+                    let nh = oh
+                    if (current < targetPixels) {
+                        const k = Math.sqrt(targetPixels / current)
+                        nw = Math.round(ow * k)
+                        nh = Math.round(oh * k)
+                        if (nw * nh < targetPixels) {
+                            nw += 1
+                            nh += 1
+                        }
+                    }
+                    const canvas = document.createElement('canvas')
+                    canvas.width = nw
+                    canvas.height = nh
+                    const ctx = canvas.getContext('2d')
+                    ctx.imageSmoothingEnabled = true
+                    ctx.imageSmoothingQuality = 'high'
+                    ctx.drawImage(img, 0, 0, nw, nh)
+                    canvas.toBlob((blob) => {
+                        if (!blob) {
+                            reject(new Error('生成图像失败'))
+                            return
+                        }
+                        const reader = new FileReader()
+                        reader.onload = () => resolve(Buffer.from(reader.result))
+                        reader.onerror = () => reject(new Error('读取Blob失败'))
+                        reader.readAsArrayBuffer(blob)
+                    }, 'image/jpeg', 0.993)
                 })
-                console.log(imgs)
-                let xlsxBuildArr = []
-                let data = [
-                    ["照片号","题名",'时间','页号','备注']
-                ]
-                for(let index in imgs){
-                    let item = imgs[index]
-                    data.push([
-                        (+index)+1,
-                        item.title,
-                        item.time,
-                        '',
-                        '',
-                    ])
-                }
-                xlsxBuildArr.push({
-                    name: "相册信息导出",
-                    data
+            },
+            loadImageFromPath(filePath){
+                return new Promise((resolve, reject) => {
+                    const url = 'atom:///' + filePath.replace(/\\/g, '/')
+                    const img = new Image()
+                    img.onload = () => resolve(img)
+                    img.onerror = (e) => reject(new Error('图片加载失败: ' + filePath))
+                    img.src = url
                 })
-                console.log(xlsxBuildArr)
-                let file_name = `${moment().format('YYYY_MM_DD_HH_mm_ss')}.xlsx`
-                let buffer = xlsx.build(xlsxBuildArr);
-                const os = require('os');
-                const homedir = os.homedir();
-                if (!fs.existsSync(path.join(homedir, '桌面'))) {
-                    console.log( path.join(homedir, 'Desktop', file_name) ,'------')
-                    fs.writeFileSync( path.join(homedir, 'Desktop', file_name), buffer, {'flag': 'w'} );
-                    ElMessage({ type: 'success', message:  path.join(homedir, 'Desktop', file_name)+ ' 相册信息导出成功',offset: 200 })
-                } else {
-                    console.log( path.join(homedir, '桌面', file_name) ,'------')
-                    fs.writeFileSync( path.join(homedir, '桌面', file_name), buffer, {'flag': 'w'} );
-                    ElMessage({ type: 'success', message:  path.join(homedir, '桌面', file_name)+  ' 相册信息导出成功',offset: 200 })
+            },
+            async processSingleImage(filePath, outputDir, rootDir){
+                const ext = path.extname(filePath).toLowerCase()
+                const relative = path.relative(rootDir, filePath)
+                const outPath = path.join(outputDir, relative)
+                this.ensureDir(path.dirname(outPath))
+
+                let originalBuffer = null
+                try {
+                    originalBuffer = fs.readFileSync(filePath)
+                } catch (e) {}
+
+                let img
+                try {
+                    img = await this.loadImageFromPath(filePath)
+                } catch (e) {
+                    fs.copyFileSync(filePath, outPath)
+                    return { action: 'copy', reason: 'load_fail' }
+                }
+
+                const ow = img.naturalWidth
+                const oh = img.naturalHeight
+                if (!ow || !oh) {
+                    fs.copyFileSync(filePath, outPath)
+                    return { action: 'copy', reason: 'size_fail' }
+                }
+                const current = ow * oh
+                const target = 20000000
+                if (current >= target) {
+                    fs.copyFileSync(filePath, outPath)
+                    return { action: 'copy', reason: 'big_enough', pixels: current }
+                }
+                if (ext === '.png') {
+                    fs.copyFileSync(filePath, outPath)
+                    return { action: 'copy', reason: 'png_skip' }
+                }
+                try {
+                    const buf = await this.resizeImageToBuffer(img, target)
+                    let finalBuffer = buf
+                    if (originalBuffer && (ext === '.jpg' || ext === '.jpeg')) {
+                        const exifApp1 = this.extractExifApp1(originalBuffer)
+                        if (exifApp1) {
+                            finalBuffer = this.insertExifToJpeg(buf, exifApp1)
+                        }
+                    }
+                    const jpgOut = outPath.replace(/\.[^.]+$/, '.jpg')
+                    fs.writeFileSync(jpgOut, finalBuffer)
+                    return { action: 'resize' }
+                } catch (e) {
+                    fs.copyFileSync(filePath, outPath)
+                    return { action: 'copy', reason: 'resize_fail' }
                 }
             },
-            async export_input(){
-                //  /Users/sandy/Downloads/test
+            extractExifApp1(buffer){
+                const data = new Uint8Array(buffer)
+                if (data[0] !== 0xFF || data[1] !== 0xD8) return null
+                let offset = 2
+                while (offset < data.length - 4) {
+                    if (data[offset] !== 0xFF) return null
+                    const marker = data[offset + 1]
+                    if (marker === 0xD8 || marker === 0xD9) {
+                        offset += 2
+                        continue
+                    }
+                    const segLen = (data[offset + 2] << 8) | data[offset + 3]
+                    if (marker === 0xE1) {
+                        return data.slice(offset, offset + 2 + segLen)
+                    }
+                    offset += 2 + segLen
+                }
+                return null
+            },
+            insertExifToJpeg(jpegBuffer, exifApp1){
+                const data = new Uint8Array(jpegBuffer)
+                if (data[0] !== 0xFF || data[1] !== 0xD8) return jpegBuffer
+                const newBuffer = new Uint8Array(data.length + exifApp1.length)
+                newBuffer[0] = 0xFF
+                newBuffer[1] = 0xD8
+                newBuffer.set(exifApp1, 2)
+                newBuffer.set(data.slice(2), 2 + exifApp1.length)
+                return Buffer.from(newBuffer)
+            },
+            async startProcessImages(){
+                if (this.processing) return
+                const src = (this.export_in_path || '').trim()
+                if (!src) {
+                    ElMessage.warning('请先填写文件夹目录')
+                    return
+                }
+                if (!fs.existsSync(src)) {
+                    ElMessage.error('目录不存在: ' + src)
+                    return
+                }
+                const st = fs.statSync(src)
+                if (!st.isDirectory()) {
+                    ElMessage.error('请输入文件夹目录，而不是文件')
+                    return
+                }
+                const images = this.collectImages(src)
+                if (!images.length) {
+                    ElMessage.warning('未在该目录及其子目录下找到 jpg/jpeg/png 图片')
+                    return
+                }
+                const parent = path.dirname(src)
+                const baseName = path.basename(src)
+                const outputDir = path.join(parent, baseName + '_像素放大处理')
+                this.ensureDir(outputDir)
 
-                let year = moment().format('YYYY')
-                let mounth = moment().format('MM')
-                let day = moment().format('DD')
-                let HH = moment().format('HH')
-                let mm = moment().format('mm')
-                let ss =moment().format('ss')
-
-
-
-                this.arr = []
-                let imgs = await this.transFolder(path.join(this.export_in_path))
-                console.log(imgs)
-                var PizZip = require('pizzip');
-                var Docxtemplater = require('docxtemplater');
-                // 读取文件,以二进制文件形式保存
-                const huanjing_lujing = process.cwd()
-                var content = fs.readFileSync( path.join(huanjing_lujing, `resources/app/软件资料`, '声像档案照片标签.docx'), 'binary');
-                // console.log(content)
-                // // 压缩数据
-                var zip = new PizZip(content);
-                // 生成模板文档
-                var doc = new Docxtemplater(zip);
-                // console.log(doc)
-                // // 设置填充数据
-                // const middleIndex = Math.ceil(arr.length / 2);
-                // const firstHalf = arr.splice(0, middleIndex);
-                // const secondHalf = arr.splice(-middleIndex);
-
-                doc.setData({
-                    list: imgs,
-                });
-                // // //渲染数据生成文档
-                doc.render()
-                // // 将文档转换文nodejs能使用的buf
-                var buf = doc.getZip().generate({ type: 'nodebuffer' });
-                // // 输出文件
-                fs.writeFileSync( path.join(huanjing_lujing, `软件资料`, '输入路径导出'+year+mounth+day+'_'+HH+mm+ss+'.docx'),  buf)
-                ElMessage({type: 'success', message: '相册信息导出成功',offset: 200})
+                this.processing = true
+                this.processPercent = 0
+                this.processStatus = ''
+                this.lastOutputDir = outputDir
+                let done = 0
+                let successCnt = 0
+                let copyCnt = 0
+                for (const fp of images) {
+                    this.processText = `处理中: ${path.relative(src, fp) || path.basename(fp)}`
+                    try {
+                        const r = await this.processSingleImage(fp, outputDir, src)
+                        if (r.action === 'resize') successCnt++
+                        else copyCnt++
+                    } catch (e) {
+                        console.error(e)
+                    }
+                    done++
+                    this.processPercent = Math.min(100, Math.round((done / images.length) * 100))
+                }
+                this.processText = `完成！共 ${images.length} 张，放大处理 ${successCnt} 张，直接复制 ${copyCnt} 张`
+                this.processStatus = 'success'
+                this.processing = false
+                ElMessage({ type: 'success', message: `图片处理完成，输出目录: ${outputDir}`, offset: 200 })
+            },
+            openOutputDir(){
+                if (!this.lastOutputDir) return
+                try {
+                    const { shell } = require('electron')
+                    if (shell && shell.openPath) {
+                        shell.openPath(this.lastOutputDir)
+                    } else {
+                        ElMessage.info('请手动打开: ' + this.lastOutputDir)
+                    }
+                } catch (e) {
+                    ElMessage.info('请手动打开: ' + this.lastOutputDir)
+                }
             },
         }
     }
 </script>
 <style scoped lang="scss">
-    #two>span:nth-child(2n){
-        margin-top: 4px;
-    }
-    #four{
-        /*display: flex;*/
-        /*flex-wrap: wrap;*/
-        /*justify-content: space-between;*/
-
-        /*width: 800px;*/
-        /*height: 1100px;*/
-
-        /*width: 800px;*/
-        /*height: 1100px;*/
-        /*margin: 0 auto;*/
-        /*border: 1px solid red;*/
-        div{
-            /*height: 348px;*/
-            /*width: 500px;*/
-            height: calc( 626px );
-            width:  calc( 900px );
-            transform: rotate(-90deg) translate(-154px, -134px);
-            position: absolute;
-            left: 70px;
-            top: 136px;
-
-            display: flex; /* 使用flex布局 */
-            justify-content: center;
-            align-items: center;
-            border: 2px solid #000;
-            /*background: red;*/
-        }
-        div:nth-child(2){
-            left: 704px;
-        }
-        div:nth-child(3){
-            top: 1054px;
-            top: 1054px;
-        }
-        div:nth-child(4){
-            left: 704px;
-            top: 1054px;
-        }
-        /*p{
-            height: 398px;
-            width: 548px;
-            transform: rotate(-90deg);
-            float: left;
-            !*img{*!
-
-            !*    !*width: 100%;*!*!
-            !*    !*height: 100%;*!*!
-
-            !*    width: 398px;*!
-            !*    height: 548px;*!
-
-            !*    !*width: 550px;*!*!
-            !*    !*height: 400px;*!*!
-            !*}*!
-        }*/
-
-        /*<!--img:nth-child(1),img:nth-child(2){-->*/
-        /*<!--    margin-bottom: 150px;-->*/
-        /*<!--}-->*/
-        /*<!--img:nth-child(1),img:nth-child(3){-->*/
-        /*<!--    margin-left: 22px;-->*/
-        /*<!--}-->*/
-        /*<!--img:nth-child(2),img:nth-child(4){-->*/
-        /*<!--    margin-left: -144px;-->*/
-        /*<!--}-->*/
-    }
-    /*.box{*/
-    /*    width: 100%;*/
-    /*    height: 100%;*/
-    /*    background-repeat: no-repeat;*/
-    /*    background-size: 100% 100%;*/
-    /*    text-align: center;*/
-    /*    padding-top: 12%;*/
-    /*    box-sizing: border-box;*/
-    /*    .title1{*/
-    /*        color: #fff;*/
-    /*        font-size: 35px;*/
-    /*    }*/
-    /*    .title2{*/
-    /*        color: #fff;*/
-    /*        font-size: 60px;*/
-    /*        font-weight: bold;*/
-    /*    }*/
-
-    /*    .content{*/
-    /*        display: flex;*/
-    /*        align-items: center;*/
-    /*        justify-content: center;*/
-    /*        margin-top: 30px;*/
-    /*        .innerConnet{*/
-    /*            width: 500px;*/
-    /*            background: rgba(255,255,255,0.2);*/
-    /*            border: 2px solid #fff;*/
-    /*            border-radius: 10px;*/
-    /*            height: 250px;*/
-    /*            padding: 10px;*/
-    /*            .innerConnetBox{*/
-    /*                width: 100%;*/
-    /*                height: 100%;*/
-    /*                background: #fff;*/
-    /*                border-radius: 10px;*/
-    /*                .title{*/
-    /*                    background: #005EBE;*/
-    /*                    width: 240px;*/
-    /*                    height: 60px;*/
-    /*                    line-height: 60px;*/
-    /*                    color: #fff;*/
-    /*                    font-size: 30px;*/
-    /*                    border-radius: 0 0 10px 10px;*/
-    /*                    margin: 0 auto;*/
-    /*                }*/
-    /*                .step1{*/
-    /*                    ul{*/
-    /*                        padding: 0 15px;*/
-    /*                        display: flex;*/
-    /*                        list-style: none;*/
-    /*                        justify-content: space-between;*/
-    /*                        li{*/
-    /*                            background: #f2f2f2;*/
-    /*                            height: 60px;*/
-    /*                            width: 45%;*/
-    /*                            cursor: pointer;*/
-    /*                            flex-wrap: wrap;*/
-    /*                            line-height: 60px;*/
-    /*                            color: #005EBE;*/
-    /*                            font-size: 26px;*/
-    /*                            border-radius: 30px;*/
-    /*                        }*/
-    /*                    }*/
-    /*                }*/
-    /*                .step2{*/
-    /*                    .back{*/
-    /*                        color: #808080;*/
-    /*                        font-size: 26px;*/
-    /*                        text-align: right;*/
-    /*                        padding-right: 20px;*/
-    /*                        cursor: pointer;*/
-    /*                    }*/
-    /*                    ul{*/
-    /*                        padding: 0 15px;*/
-    /*                        display: flex;*/
-    /*                        list-style: none;*/
-    /*                        justify-content: space-between;*/
-    /*                        margin-top: 50px;*/
-    /*                        li{*/
-    /*                            background: #f2f2f2;*/
-    /*                            height: 80px;*/
-    /*                            width: 32%;*/
-    /*                            cursor: pointer;*/
-    /*                            flex-wrap: wrap;*/
-    /*                            line-height: 80px;*/
-    /*                            color: #005EBE;*/
-    /*                            font-size: 30px;*/
-    /*                            border-radius: 30px;*/
-    /*                        }*/
-    /*                    }*/
-    /*                }*/
-    /*            }*/
-    /*            .bumen{*/
-    /*                color: #FFF2C7;*/
-    /*                text-align: center;*/
-    /*                font-size: 26px;*/
-    /*                margin-top: 30px;*/
-    /*            }*/
-    /*        }*/
-    /*    }*/
-    /*}*/
 </style>

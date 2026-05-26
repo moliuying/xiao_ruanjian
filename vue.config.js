@@ -19,7 +19,7 @@ module.exports = {
                                 "to": '../软件资料',
                               },
             builderOptions: {
-                "appId": "img_excel_20231120_89",
+                "appId": "img_excel_20231120_900",
 //                 "productName": "图片分析汇总",//项目名，也是生成的安装文件名，即xxx.exe
 //                 "productName": "软件集合",//项目名，也是生成的安装文件名，即xxx.exe
 //                 "productName": "文本过滤",//项目名，也是生成的安装文件名，即xxx.exe
@@ -33,7 +33,7 @@ module.exports = {
                 },
                 'asar': false,
                 "win": {
-                    "icon": './public/beijihu.ico',
+                    "icon": './public/nanjiren.ico',
 //                     "target": ["portable"]
                     "target": [
                         {
