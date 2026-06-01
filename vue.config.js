@@ -19,14 +19,14 @@ module.exports = {
                                 "to": '../软件资料',
                               },
             builderOptions: {
-                "appId": "img_excel_20231120_900",
+                "appId": "img_excel_20260531_1111",
 //                 "productName": "图片分析汇总",//项目名，也是生成的安装文件名，即xxx.exe
 //                 "productName": "软件集合",//项目名，也是生成的安装文件名，即xxx.exe
 //                 "productName": "文本过滤",//项目名，也是生成的安装文件名，即xxx.exe
 //                 "productName": "手机号解析",//项目名，也是生成的安装文件名，即xxx.exe
 //                 "productName": "基本功出题软件",//项目名，也是生成的安装文件名，即xxx.exe
 //                 "productName": "数据统计软件",//项目名，也是生成的安装文件名，即xxx.exe
-                "productName": "数据处理软件",//项目名，也是生成的安装文件名，即xxx.exe
+                "productName": "照片分辨率修改",//项目名，也是生成的安装文件名，即xxx.exe
                 "copyright": "Copyright © 2022 taobao",//版权信息
                 "directories": {
                     "output": "./dist"//输出文件路径
@@ -64,7 +64,7 @@ module.exports = {
 //                     "shortcutName": "基本功出题软件", // 图标名称
 //                     "shortcutName": "图片处理", // 图标名称
 //                     "shortcutName": "软件集合", // 图标名称
-                    "shortcutName": "数据处理软件", // 图标名称
+                    "shortcutName": "照片分辨率修改", // 图标名称
                 }
             }
         }

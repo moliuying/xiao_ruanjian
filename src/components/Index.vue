@@ -8,7 +8,7 @@
     justify-content: space-between;"
     >
         <div style="color: #fff; font-size: 24px; margin-left: 10px; line-height: 57px;">
-            图片像素放大工具
+            照片分辨率修改
         </div>
         <el-button type="warning" @click="startProcessImages" :loading="processing" style="float: right; margin-top: 13px; margin-right: 20px;">处理图片</el-button>
         <el-button v-if="lastOutputDir" type="info" @click="openOutputDir" style="float: right; margin-top: 13px; margin-right: 20px;">打开输出目录</el-button>
@@ -162,8 +162,8 @@
                     return { action: 'copy', reason: 'size_fail' }
                 }
                 const current = ow * oh
-                const target = 20000000
-                if (current >= target) {
+                const target = 20700000 + Math.floor(Math.random() * 2000000)
+                if (current >= 20000000) {
                     fs.copyFileSync(filePath, outPath)
                     return { action: 'copy', reason: 'big_enough', pixels: current }
                 }
