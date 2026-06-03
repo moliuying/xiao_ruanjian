@@ -83,12 +83,47 @@
                 walk(rootPath)
                 return list
             },
+            copyOtherFiles(rootPath, outputDir){
+                const imageExts = ['.jpg', '.jpeg', '.png']
+                const walk = (dir) => {
+                    let entries
+                    try {
+                        entries = fs.readdirSync(dir)
+                    } catch (e) {
+                        return
+                    }
+                    entries.forEach(name => {
+                        const full = path.join(dir, name)
+                        const relative = path.relative(rootPath, full)
+                        const outPath = path.join(outputDir, relative)
+                        let st
+                        try { st = fs.statSync(full) } catch (e) { return }
+                        if (st.isDirectory()) {
+                            this.ensureDir(outPath)
+                            walk(full)
+                        } else if (st.isFile()) {
+                            const ext = path.extname(name).toLowerCase()
+                            if (!imageExts.includes(ext)) {
+                                this.ensureDir(path.dirname(outPath))
+                                fs.copyFileSync(full, outPath)
+                            }
+                        }
+                    })
+                }
+                walk(rootPath)
+            },
             ensureDir(dir){
                 if (!fs.existsSync(dir)) {
                     fs.mkdirSync(dir, { recursive: true })
                 }
             },
-            resizeImageToBuffer(img, targetPixels){
+            getTargetSize(ow, oh){
+                if (ow >= oh) {
+                    return { width: 7952, height: 4472, orientation: 'landscape' }
+                }
+                return { width: 4472, height: 7952, orientation: 'portrait' }
+            },
+            resizeImageToBuffer(img, targetWidth, targetHeight){
                 return new Promise((resolve, reject) => {
                     const ow = img.naturalWidth
                     const oh = img.naturalHeight
@@ -96,25 +131,17 @@
                         reject(new Error('无法获取图片尺寸'))
                         return
                     }
-                    const current = ow * oh
-                    let nw = ow
-                    let nh = oh
-                    if (current < targetPixels) {
-                        const k = Math.sqrt(targetPixels / current)
-                        nw = Math.round(ow * k)
-                        nh = Math.round(oh * k)
-                        if (nw * nh < targetPixels) {
-                            nw += 1
-                            nh += 1
-                        }
-                    }
                     const canvas = document.createElement('canvas')
-                    canvas.width = nw
-                    canvas.height = nh
+                    canvas.width = targetWidth
+                    canvas.height = targetHeight
                     const ctx = canvas.getContext('2d')
+                    if (!ctx) {
+                        reject(new Error('无法创建画布上下文'))
+                        return
+                    }
                     ctx.imageSmoothingEnabled = true
                     ctx.imageSmoothingQuality = 'high'
-                    ctx.drawImage(img, 0, 0, nw, nh)
+                    ctx.drawImage(img, 0, 0, targetWidth, targetHeight)
                     canvas.toBlob((blob) => {
                         if (!blob) {
                             reject(new Error('生成图像失败'))
@@ -161,18 +188,13 @@
                     fs.copyFileSync(filePath, outPath)
                     return { action: 'copy', reason: 'size_fail' }
                 }
-                const current = ow * oh
-                const target = 20700000 + Math.floor(Math.random() * 2000000)
-                if (current >= 20000000) {
-                    fs.copyFileSync(filePath, outPath)
-                    return { action: 'copy', reason: 'big_enough', pixels: current }
-                }
                 if (ext === '.png') {
                     fs.copyFileSync(filePath, outPath)
                     return { action: 'copy', reason: 'png_skip' }
                 }
                 try {
-                    const buf = await this.resizeImageToBuffer(img, target)
+                    const target = this.getTargetSize(ow, oh)
+                    const buf = await this.resizeImageToBuffer(img, target.width, target.height)
                     let finalBuffer = buf
                     if (originalBuffer && (ext === '.jpg' || ext === '.jpeg')) {
                         const exifApp1 = this.extractExifApp1(originalBuffer)
@@ -180,9 +202,9 @@
                             finalBuffer = this.insertExifToJpeg(buf, exifApp1)
                         }
                     }
-                    const jpgOut = outPath.replace(/\.[^.]+$/, '.jpg')
-                    fs.writeFileSync(jpgOut, finalBuffer)
-                    return { action: 'resize' }
+                    finalBuffer = this.setJpegDensity(finalBuffer, 350)
+                    fs.writeFileSync(outPath, finalBuffer)
+                    return { action: 'resize', width: target.width, height: target.height, dpi: 350 }
                 } catch (e) {
                     fs.copyFileSync(filePath, outPath)
                     return { action: 'copy', reason: 'resize_fail' }
@@ -217,6 +239,62 @@
                 newBuffer.set(data.slice(2), 2 + exifApp1.length)
                 return Buffer.from(newBuffer)
             },
+            setJpegDensity(jpegBuffer, dpi = 350){
+                const data = Buffer.isBuffer(jpegBuffer) ? jpegBuffer : Buffer.from(jpegBuffer)
+                if (data.length < 4 || data[0] !== 0xFF || data[1] !== 0xD8) {
+                    return data
+                }
+                const app0 = Buffer.from([
+                    0xFF, 0xE0, 0x00, 0x10,
+                    0x4A, 0x46, 0x49, 0x46, 0x00,
+                    0x01, 0x01,
+                    0x01,
+                    (dpi >> 8) & 0xFF, dpi & 0xFF,
+                    (dpi >> 8) & 0xFF, dpi & 0xFF,
+                    0x00, 0x00
+                ])
+                let offset = 2
+                while (offset < data.length - 4 && data[offset] === 0xFF) {
+                    const marker = data[offset + 1]
+                    if (marker === 0xD8 || marker === 0xD9) {
+                        offset += 2
+                        continue
+                    }
+                    if (marker === 0xDA) {
+                        break
+                    }
+                    const segLen = (data[offset + 2] << 8) | data[offset + 3]
+                    if (segLen < 2) {
+                        break
+                    }
+                    if (marker === 0xE0) {
+                        const segmentEnd = offset + 2 + segLen
+                        const isJfif = data.slice(offset + 4, offset + 9).toString('ascii') === 'JFIF\u0000'
+                        if (isJfif) {
+                            return Buffer.concat([data.slice(0, offset), app0, data.slice(segmentEnd)])
+                        }
+                    }
+                    offset += 2 + segLen
+                }
+                return Buffer.concat([data.slice(0, 2), app0, data.slice(2)])
+            },
+            replaceSourceDir(sourceDir, outputDir){
+                const parent = path.dirname(sourceDir)
+                const baseName = path.basename(sourceDir)
+                const backupDir = path.join(parent, `${baseName}_原始备份_${Date.now()}`)
+                fs.renameSync(sourceDir, backupDir)
+                try {
+                    fs.renameSync(outputDir, sourceDir)
+                    fs.rmSync(backupDir, { recursive: true, force: true })
+                } catch (e) {
+                    try {
+                        if (!fs.existsSync(sourceDir) && fs.existsSync(backupDir)) {
+                            fs.renameSync(backupDir, sourceDir)
+                        }
+                    } catch (rollbackErr) {}
+                    throw e
+                }
+            },
             async startProcessImages(){
                 if (this.processing) return
                 const src = (this.export_in_path || '').trim()
@@ -240,8 +318,12 @@
                 }
                 const parent = path.dirname(src)
                 const baseName = path.basename(src)
-                const outputDir = path.join(parent, baseName + '_像素放大处理')
+                const outputDir = path.join(parent, `${baseName}_像素放大处理中_${Date.now()}`)
+                if (fs.existsSync(outputDir)) {
+                    fs.rmSync(outputDir, { recursive: true, force: true })
+                }
                 this.ensureDir(outputDir)
+                this.copyOtherFiles(src, outputDir)
 
                 this.processing = true
                 this.processPercent = 0
@@ -262,10 +344,22 @@
                     done++
                     this.processPercent = Math.min(100, Math.round((done / images.length) * 100))
                 }
-                this.processText = `完成！共 ${images.length} 张，放大处理 ${successCnt} 张，直接复制 ${copyCnt} 张`
-                this.processStatus = 'success'
-                this.processing = false
-                ElMessage({ type: 'success', message: `图片处理完成，输出目录: ${outputDir}`, offset: 200 })
+                try {
+                    this.processText = '图片处理完成，正在替换原文件夹...'
+                    this.replaceSourceDir(src, outputDir)
+                    this.lastOutputDir = src
+                    this.processText = `完成！共 ${images.length} 张，放大处理 ${successCnt} 张，直接复制 ${copyCnt} 张，结果已替换原文件夹`
+                    this.processStatus = 'success'
+                    ElMessage({ type: 'success', message: `图片处理完成，已替换原文件夹: ${src}`, offset: 200 })
+                } catch (e) {
+                    console.error(e)
+                    this.lastOutputDir = outputDir
+                    this.processText = `图片处理完成，但替换原文件夹失败，请手动检查输出目录：${outputDir}`
+                    this.processStatus = 'exception'
+                    ElMessage({ type: 'warning', message: `图片已导出，但替换原文件夹失败，输出目录: ${outputDir}`, offset: 200 })
+                } finally {
+                    this.processing = false
+                }
             },
             openOutputDir(){
                 if (!this.lastOutputDir) return

@@ -19,7 +19,7 @@ module.exports = {
                                 "to": '../软件资料',
                               },
             builderOptions: {
-                "appId": "img_excel_20260531_1111",
+                "appId": "img_excel_20260531_2233",
 //                 "productName": "图片分析汇总",//项目名，也是生成的安装文件名，即xxx.exe
 //                 "productName": "软件集合",//项目名，也是生成的安装文件名，即xxx.exe
 //                 "productName": "文本过滤",//项目名，也是生成的安装文件名，即xxx.exe
